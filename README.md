@@ -44,12 +44,13 @@ No modules.
 | <a name="input_dns_ttl"></a> [dns\_ttl](#input\_dns\_ttl) | TTL for DNS records | `number` | `10` | no |
 | <a name="input_enable_dns_config"></a> [enable\_dns\_config](#input\_enable\_dns\_config) | Enable DNS configuration for the service. Set to false for HTTP namespaces or when using existing HTTP namespaces. | `bool` | `true` | no |
 | <a name="input_enable_health_checks"></a> [enable\_health\_checks](#input\_enable\_health\_checks) | Enable health checks for the service. Set to false when using private IPs or unsupported instance types. | `bool` | `true` | no |
+| <a name="input_enable_lambda_registration"></a> [enable\_lambda\_registration](#input\_enable\_lambda\_registration) | Enable registration of Lambda Function URL in CloudMap service discovery | `bool` | `false` | no |
 | <a name="input_existing_namespace_id"></a> [existing\_namespace\_id](#input\_existing\_namespace\_id) | ID of an existing namespace to use | `string` | `null` | no |
 | <a name="input_lambda_attributes"></a> [lambda\_attributes](#input\_lambda\_attributes) | Additional attributes for the Lambda instance in CloudMap | `map(string)` | `{}` | no |
 | <a name="input_lambda_instance_id"></a> [lambda\_instance\_id](#input\_lambda\_instance\_id) | Unique identifier for the Lambda instance in CloudMap | `string` | `"lambda-function"` | no |
+| <a name="input_lambda_ip_address"></a> [lambda\_ip\_address](#input\_lambda\_ip\_address) | IP address to use for Lambda A record in CloudMap. If not provided, uses a placeholder IP. | `string` | `null` | no |
 | <a name="input_lambda_service_name"></a> [lambda\_service\_name](#input\_lambda\_service\_name) | Name of the CloudMap service for Lambda registration. If not specified, uses the first service name from var.services | `string` | `null` | no |
 | <a name="input_lambda_url"></a> [lambda\_url](#input\_lambda\_url) | Lambda Function URL or API Gateway endpoint to register in CloudMap | `string` | `null` | no |
-| <a name="input_enable_lambda_registration"></a> [enable\_lambda\_registration](#input\_enable\_lambda\_registration) | Enable registration of Lambda Function URL in CloudMap service discovery | `bool` | `false` | no |
 | <a name="input_namespace_description"></a> [namespace\_description](#input\_namespace\_description) | Description of the CloudMap namespace | `string` | `null` | no |
 | <a name="input_namespace_name"></a> [namespace\_name](#input\_namespace\_name) | Name of the CloudMap namespace | `string` | `null` | no |
 | <a name="input_routing_policy"></a> [routing\_policy](#input\_routing\_policy) | Routing policy for the service | `string` | `"MULTIVALUE"` | no |
