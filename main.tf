@@ -165,6 +165,27 @@ resource "aws_iam_role_policy" "ecs_service_discovery" {
   })
 }
 
+# Lambda Function URL Registration in CloudMap
+resource "aws_service_discovery_instance" "lambda" {
+  for_each = var.enable_lambda_registration && var.lambda_service_name != null ? toset([var.lambda_service_name]) : toset([])
+
+  instance_id = var.lambda_instance_id
+  service_id  = aws_service_discovery_service.services[each.key].id
+
+  attributes = merge(
+    {
+      "AWS_INSTANCE_IPV4" = var.lambda_ip_address != null ? var.lambda_ip_address : "127.0.0.1"
+      "instance_type"     = "lambda"
+      "service_type"      = "function"
+      "protocol"          = "https"
+      "lambda_url"        = var.lambda_url
+    },
+    var.lambda_attributes
+  )
+
+  depends_on = [aws_service_discovery_service.services]
+}
+
 # Local values for namespace ID and health check debugging
 locals {
   namespace_id = var.existing_namespace_id != null ? var.existing_namespace_id : (
@@ -173,6 +194,11 @@ locals {
         var.create_namespace ? aws_service_discovery_http_namespace.this[0].id : null
       )
     )
+  )
+
+  # Determine which service to use for Lambda registration
+  lambda_service_key = var.lambda_service_name != null ? var.lambda_service_name : (
+    length(var.services) > 0 ? keys(var.services)[0] : null
   )
 
   # Debug information for health check configuration
@@ -201,4 +227,14 @@ locals {
       )
     }
   }
+
+  # Lambda registration debug information
+  lambda_registration_debug = var.enable_lambda_registration ? {
+    lambda_url_provided  = var.lambda_url != null
+    lambda_service_key   = local.lambda_service_key
+    services_available   = length(var.services) > 0
+    will_register_lambda = var.enable_lambda_registration && var.lambda_url != null && length(var.services) > 0
+    lambda_instance_id   = var.lambda_instance_id
+    lambda_attributes    = var.lambda_attributes
+  } : null
 }

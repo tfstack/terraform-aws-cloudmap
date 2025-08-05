@@ -136,3 +136,52 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# Lambda Function URL Support Variables
+variable "enable_lambda_registration" {
+  description = "Enable registration of Lambda Function URL in CloudMap service discovery"
+  type        = bool
+  default     = false
+}
+
+variable "lambda_instance_id" {
+  description = "Unique identifier for the Lambda instance in CloudMap"
+  type        = string
+  default     = "lambda-function"
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.lambda_instance_id))
+    error_message = "Lambda instance ID must contain only alphanumeric characters, hyphens, and underscores."
+  }
+}
+
+variable "lambda_url" {
+  description = "Lambda Function URL or API Gateway endpoint to register in CloudMap"
+  type        = string
+  default     = null
+  validation {
+    condition     = var.lambda_url == null || can(regex("^https?://", var.lambda_url))
+    error_message = "Lambda URL must be a valid HTTP or HTTPS URL."
+  }
+}
+
+variable "lambda_service_name" {
+  description = "Name of the CloudMap service for Lambda registration. If not specified, uses the first service name from var.services"
+  type        = string
+  default     = null
+}
+
+variable "lambda_attributes" {
+  description = "Additional attributes for the Lambda instance in CloudMap"
+  type        = map(string)
+  default     = {}
+}
+
+variable "lambda_ip_address" {
+  description = "IP address to use for Lambda A record in CloudMap. If not provided, uses a placeholder IP."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.lambda_ip_address == null || can(regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$", var.lambda_ip_address))
+    error_message = "Lambda IP address must be a valid IPv4 address."
+  }
+}
