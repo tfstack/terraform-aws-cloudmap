@@ -53,3 +53,28 @@ output "health_check_debug" {
   description = "Debug information for health check configuration - use for troubleshooting"
   value       = local.health_check_debug
 }
+
+# Lambda Registration Outputs
+output "lambda_instance_id" {
+  description = "ID of the registered Lambda instance in CloudMap"
+  value       = var.enable_lambda_registration && var.lambda_url != null && var.lambda_service_name != null ? aws_service_discovery_instance.lambda[var.lambda_service_name].instance_id : null
+}
+
+output "lambda_service_id" {
+  description = "ID of the CloudMap service where Lambda is registered"
+  value       = var.enable_lambda_registration && var.lambda_url != null && var.lambda_service_name != null ? aws_service_discovery_instance.lambda[var.lambda_service_name].service_id : null
+}
+
+output "lambda_registration_debug" {
+  description = "Debug information for Lambda registration - use for troubleshooting"
+  value       = local.lambda_registration_debug
+}
+
+output "lambda_discovery_url" {
+  description = "CloudMap discovery URL for the Lambda function"
+  value = var.enable_lambda_registration && var.lambda_url != null && length(var.services) > 0 ? (
+    var.create_private_dns_namespace ? "${var.lambda_instance_id}.${aws_service_discovery_service.services[local.lambda_service_key].name}.${var.namespace_name}" : (
+      var.create_public_dns_namespace ? "${var.lambda_instance_id}.${aws_service_discovery_service.services[local.lambda_service_key].name}.${var.namespace_name}" : null
+    )
+  ) : null
+}

@@ -250,3 +250,215 @@ run "multiple_services_container_orchestration" {
     error_message = "Database service name should be database-service"
   }
 }
+
+# Test Lambda Function URL Registration in CloudMap
+run "lambda_function_url_registration" {
+  command = plan
+
+  variables {
+    create_private_dns_namespace = true
+    namespace_name               = "lambda.internal"
+    namespace_description        = "Private DNS namespace for Lambda service discovery"
+    vpc_id                       = "vpc-12345678"
+    services = {
+      "api-service" = {
+        name                                  = "api-service"
+        description                           = "API service for Lambda function discovery"
+        dns_ttl                               = 60
+        dns_record_type                       = "CNAME" # Required for Lambda Function URL
+        routing_policy                        = "WEIGHTED"
+        health_check_custom_config            = true
+        custom_health_check_failure_threshold = 1
+        tags = {
+          Service = "api"
+          Type    = "lambda"
+        }
+      }
+    }
+    enable_health_checks = true
+
+    # Lambda registration configuration
+    enable_lambda_registration = true
+    lambda_instance_id         = "api-lambda-01"
+    lambda_url                 = "https://abc123.lambda-url.ap-southeast-2.on.aws"
+    lambda_service_name        = "api-service"
+    lambda_attributes = {
+      "environment"   = "production"
+      "version"       = "v1.0.0"
+      "region"        = "ap-southeast-2"
+      "function_name" = "cloudmap-api"
+      "timeout"       = "30"
+      "memory_size"   = "128"
+    }
+
+    tags = {
+      Environment = "production"
+      Project     = "lambda-discovery"
+    }
+  }
+
+  assert {
+    condition     = var.create_private_dns_namespace == true
+    error_message = "Private DNS namespace creation should be enabled for Lambda"
+  }
+
+  assert {
+    condition     = var.services["api-service"].dns_record_type == "CNAME"
+    error_message = "DNS record type should be CNAME for Lambda Function URL"
+  }
+
+  assert {
+    condition     = var.enable_lambda_registration == true
+    error_message = "Lambda registration should be enabled"
+  }
+
+  assert {
+    condition     = var.lambda_instance_id == "api-lambda-01"
+    error_message = "Lambda instance ID should be api-lambda-01"
+  }
+
+  assert {
+    condition     = can(regex("^https://", var.lambda_url))
+    error_message = "Lambda URL should be a valid HTTPS URL"
+  }
+
+  assert {
+    condition     = var.lambda_service_name == "api-service"
+    error_message = "Lambda service name should be api-service"
+  }
+
+  assert {
+    condition     = var.lambda_attributes["environment"] == "production"
+    error_message = "Lambda environment should be production"
+  }
+
+  assert {
+    condition     = var.lambda_attributes["version"] == "v1.0.0"
+    error_message = "Lambda version should be v1.0.0"
+  }
+}
+
+# Test Lambda Registration with Multiple Services
+run "lambda_registration_multiple_services" {
+  command = plan
+
+  variables {
+    create_private_dns_namespace = true
+    namespace_name               = "multi-lambda.internal"
+    namespace_description        = "Multiple Lambda services in CloudMap"
+    vpc_id                       = "vpc-12345678"
+    services = {
+      "api-service" = {
+        name                                  = "api-service"
+        description                           = "API service for Lambda functions"
+        dns_ttl                               = 60
+        dns_record_type                       = "CNAME"
+        routing_policy                        = "WEIGHTED"
+        health_check_custom_config            = true
+        custom_health_check_failure_threshold = 1
+      }
+      "worker-service" = {
+        name                                  = "worker-service"
+        description                           = "Worker service for Lambda functions"
+        dns_ttl                               = 120
+        dns_record_type                       = "CNAME"
+        routing_policy                        = "MULTIVALUE"
+        health_check_custom_config            = true
+        custom_health_check_failure_threshold = 1
+      }
+    }
+    enable_health_checks = true
+
+    # Lambda registration in specific service
+    enable_lambda_registration = true
+    lambda_instance_id         = "worker-lambda-01"
+    lambda_url                 = "https://worker123.lambda-url.ap-southeast-2.on.aws"
+    lambda_service_name        = "worker-service" # Register in worker-service
+    lambda_attributes = {
+      "environment"   = "production"
+      "version"       = "v2.0.0"
+      "function_name" = "worker-function"
+      "service_type"  = "worker"
+    }
+
+    tags = {
+      Environment = "production"
+      Project     = "multi-lambda"
+    }
+  }
+
+  assert {
+    condition     = length(var.services) == 2
+    error_message = "Should have 2 services defined"
+  }
+
+  assert {
+    condition     = var.lambda_service_name == "worker-service"
+    error_message = "Lambda should be registered in worker-service"
+  }
+
+  assert {
+    condition     = var.lambda_instance_id == "worker-lambda-01"
+    error_message = "Lambda instance ID should be worker-lambda-01"
+  }
+
+  assert {
+    condition     = var.lambda_attributes["service_type"] == "worker"
+    error_message = "Lambda service type should be worker"
+  }
+}
+
+# Test Lambda Registration Validation
+run "lambda_registration_validation" {
+  command = plan
+
+  variables {
+    create_private_dns_namespace = true
+    namespace_name               = "validation.internal"
+    namespace_description        = "Lambda registration validation test"
+    vpc_id                       = "vpc-12345678"
+    services = {
+      "api-service" = {
+        name                                  = "api-service"
+        description                           = "API service for validation"
+        dns_ttl                               = 60
+        dns_record_type                       = "CNAME"
+        routing_policy                        = "WEIGHTED"
+        health_check_custom_config            = true
+        custom_health_check_failure_threshold = 1
+      }
+    }
+    enable_health_checks = true
+
+    # Lambda registration with validation
+    enable_lambda_registration = true
+    lambda_instance_id         = "valid-lambda-01" # Valid ID format
+    lambda_url                 = "https://valid123.lambda-url.ap-southeast-2.on.aws"
+    lambda_service_name        = "api-service"
+    lambda_attributes = {
+      "environment"   = "staging"
+      "version"       = "v1.0.0"
+      "function_name" = "valid-function"
+    }
+
+    tags = {
+      Environment = "staging"
+      Project     = "validation"
+    }
+  }
+
+  assert {
+    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.lambda_instance_id))
+    error_message = "Lambda instance ID should contain only alphanumeric characters, hyphens, and underscores"
+  }
+
+  assert {
+    condition     = can(regex("^https://", var.lambda_url))
+    error_message = "Lambda URL should be a valid HTTPS URL"
+  }
+
+  assert {
+    condition     = var.lambda_attributes["environment"] == "staging"
+    error_message = "Lambda environment should be staging"
+  }
+}
